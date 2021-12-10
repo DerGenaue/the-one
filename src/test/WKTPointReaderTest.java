@@ -23,6 +23,11 @@ public class WKTPointReaderTest extends TestCase {
 		"LINESTRING (1.0 2.0, 2.0 3.0)\n"+ // should skip this line
 		"POINT (2552782.3212060533 6673285.5993876355)\n";
 
+	private final String MULTIPOINT_DATA =
+		"MULTIPOINT (2552448.388211649 6673384.4020657055, 2552275.9398973365 6673509.820852942) \n"+
+		"LINESTRING (1.0 2.0, 2.0 3.0)\n"+ // should skip this line
+		"MULTIPOINT ((2552361.289603607 6673630.088457832), (2552782.3212060533 6673285.5993876355))\n";
+
 	private final Coord[] POINTS = {
 			new Coord(2552448.388211649, 6673384.4020657055),
 			new Coord(2552275.9398973365, 6673509.820852942),
@@ -35,8 +40,19 @@ public class WKTPointReaderTest extends TestCase {
 		r = new WKTReader();
 	}
 
-	public void testReader() throws Exception {
+	public void testPointReader() throws Exception {
 		StringReader input = new StringReader(POINT_DATA);
+		List<Coord> coords = r.readPoints(input);
+
+		assertEquals(POINTS.length, coords.size());
+
+		for (int i=0; i<POINTS.length; i++) {
+			assertEquals(coords.get(i), POINTS[i]);
+		}
+	}
+
+	public void testMultipointReader() throws Exception {
+		StringReader input = new StringReader(MULTIPOINT_DATA);
 		List<Coord> coords = r.readPoints(input);
 
 		assertEquals(POINTS.length, coords.size());

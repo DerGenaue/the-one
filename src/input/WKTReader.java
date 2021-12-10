@@ -63,9 +63,9 @@ public class WKTReader {
 			if (type.equals(POINT)) {
 				points.add(parsePoint());
 			}
-			if (type.equals(MULTIPOINT)) {
+			else if (type.equals(MULTIPOINT)) {
 				// Linestring is mostly equivalent to multipoint string so we can just re-use the code
-				points.addAll(parseLineString(readNestedContents(reader)));
+				points.addAll(parseLineString(readNestedContents(true)));
 			}
 			else {
 				// known type but not interesting -> skip
@@ -210,6 +210,7 @@ public class WKTReader {
 		double x,y;
 
 		try {
+			//String test = s.next();
 			x = s.nextDouble();
 			y = s.nextDouble();
 		} catch (RuntimeException e) {
@@ -250,11 +251,13 @@ public class WKTReader {
 
 	/**
 	 * Reads everything from the first opening parenthesis until line that
-	 * ends to a closing parenthesis and returns the contents in one string
+	 * ends to a closing parenthesis and returns the contents in one string.
+	 * All whitespace characters are converted to basic whitespace in the process.
 	 * @param r Reader to read the input from
+	 * @param removeParentheses Whether to remove all inner parentheses from the read string
 	 * @return The text between the parentheses
 	 */
-	public String readNestedContents(Reader r) throws IOException {
+	public String readNestedContents(Reader r, boolean removeParentheses) throws IOException {
 		StringBuffer contents = new StringBuffer();
 		int parOpen; // nrof open parentheses
 		char c = '\0';
@@ -266,18 +269,45 @@ public class WKTReader {
 			c = (char)r.read();
 			if (c == '(') {
 				parOpen++;
+				if(removeParentheses)
+					continue;
 			}
-			if (c == ')') {
+			else if (c == ')') {
 				parOpen--;
+				if(removeParentheses)
+					continue;
 			}
-			if (Character.isWhitespace(c)) {
+			else if (Character.isWhitespace(c)) {
 				c = ' '; // convert all whitespace to basic space
 			}
 			contents.append(c);
 		}
 
-		contents.deleteCharAt(contents.length()-1);	// remove last ')'
+		if(!removeParentheses){ // otherwise it is removed already
+			contents.deleteCharAt(contents.length() - 1);    // remove last ')'
+		}
 		return contents.toString();
+	}
+
+	/**
+	 * Returns nested contents from the reader given at init
+	 * All whitespace characters are converted to basic whitespace in the process.
+	 * @param removeParentheses Whether to remove all inner parentheses from the read string
+	 * @return The text between the parentheses
+	 */
+	public String readNestedContents(boolean removeParentheses) throws IOException {
+		return readNestedContents(reader, removeParentheses);
+	}
+
+	/**
+	 * Reads everything from the first opening parenthesis until line that
+	 * ends to a closing parenthesis and returns the contents in one string
+	 * All whitespace characters are converted to basic whitespace in the process.
+	 * @param r Reader to read the input from
+	 * @return The text between the parentheses
+	 */
+	public String readNestedContents(Reader r) throws IOException {
+		return readNestedContents(r, false);
 	}
 
 	/**
